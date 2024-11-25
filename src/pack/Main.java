@@ -1,19 +1,29 @@
 package pack;
 
-import javax.swing.*;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 
 public class Main {
 	public static void main(String[] args) {
 
-		Test t = new Test(25, 61, true, "Hello", new Test2(90, 81));
+		Serializer serializer = new Serializer();
 
-		String serializedValue = Serializer.serialize(t, Test.class);
+		Test t = new Test(1, 2);
 
-		System.out.println(serializedValue);
+		t.setTest(t);
 
-		Test test = Serializer.deserialize(serializedValue, Test.class);
+		Test2 test2 = new Test2(t, 12);
 
-		System.out.println(Serializer.serialize(test, Test.class));
+		String value = serializer.serialize(test2, Test2.class);
+
+		System.out.println(value);
+
+		Test2 t2 = serializer.deserialize(value, Test2.class);
+
+		System.out.println(t2.getTest().getTest() == t2.getTest());
+
+		System.out.println(serializer.serialize(t2, Test2.class));
+
 
 	}
 }
