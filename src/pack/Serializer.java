@@ -133,7 +133,7 @@ public class Serializer {
 				index = str.indexOf("}");
 				field = str.substring(0, index + 1);
 				fields.add(field);
-				str = str.substring(index + 2);
+				str = str.substring((str.length() > index + 2) ? (index + 2) : (index + 1));
 			}
 			stop = str.isEmpty();
 		}
