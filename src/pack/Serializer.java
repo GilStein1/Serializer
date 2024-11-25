@@ -71,23 +71,21 @@ public class Serializer {
 			int indexOfSplit = field.indexOf(FIELD_NAME_SPLIT_CHAR);
 			String fieldName = field.substring(0, indexOfSplit);
 			String fieldValue = field.substring(indexOfSplit + 1);
-			Field currentField = null;
-			for (Field f : classOfObject.getDeclaredFields()) {
-				if (f.getName().equals(fieldName)) {
-					currentField = f;
-				}
-			}
-			Field fieldOfClass = currentField;
+			Field fieldOfClass = getFieldFromName(classOfObject, fieldName);
 			Objects.requireNonNull(fieldOfClass).setAccessible(true);
-			if (fieldOfClass.getType().isPrimitive()) {
-				fieldOfClass.set(object, transformStringValueToPrimitiveValue(fieldValue, fieldOfClass.getType()));
-			} else if (fieldOfClass.getType() == String.class) {
-				fieldOfClass.set(object, fieldValue);
-			} else {
-				fieldOfClass.set(object, insideDeserializing(fieldValue, fieldOfClass.getType()));
-			}
+			fieldOfClass.set(object, transformStringValueToObject(fieldValue, fieldOfClass.getType()));
 		}
 		return object;
+	}
+
+	private static Field getFieldFromName(Class<?> classOfObject, String fieldName) {
+		Field currentField = null;
+		for (Field f : classOfObject.getDeclaredFields()) {
+			if (f.getName().equals(fieldName)) {
+				currentField = f;
+			}
+		}
+		return currentField;
 	}
 
 	private static String[] splitStringByFields(String str) {
@@ -121,7 +119,7 @@ public class Serializer {
 		return fields.toArray(new String[0]);
 	}
 
-	private static Object transformStringValueToPrimitiveValue(String value, Class<?> classOfObject) {
+	private static Object transformStringValueToObject(String value, Class<?> classOfObject) throws NoSuchFieldException, InvocationTargetException, InstantiationException, IllegalAccessException {
 		String className = classOfObject.getName();
 		return switch (className) {
 			case "boolean" -> Boolean.parseBoolean(value);
@@ -131,7 +129,8 @@ public class Serializer {
 			case "long" -> Long.parseLong(value);
 			case "float" -> Float.parseFloat(value);
 			case "double" -> Double.parseDouble(value);
-			default -> value;
+			case "java.lang.String" -> value;
+			default -> insideDeserializing(value, classOfObject);
 		};
 	}
 
