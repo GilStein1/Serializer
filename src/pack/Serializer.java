@@ -35,8 +35,7 @@ public class Serializer {
 		StringBuilder serializedValue = new StringBuilder();
 		Field[] fields = classOfObject.getDeclaredFields();
 		for (Field field : fields) {
-			if (!Modifier.isTransient(field.getModifiers())) {
-				field.setAccessible(true);
+			if (!Modifier.isTransient(field.getModifiers()) && field.trySetAccessible()) {
 				if (field.getType().isPrimitive() || field.getType() == String.class) {
 					serializedValue
 						.append(FIELD_SPLIT_CHAR)
