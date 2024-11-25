@@ -12,6 +12,9 @@ public class Serializer {
 	private static final char FIELD_NAME_SPLIT_CHAR = ':';
 
 	public static String serialize(Object obj, Class<?> classOfObject) {
+		if(!obj.getClass().equals(classOfObject)) {
+			throw new IllegalArgumentException("Object is not of type " + classOfObject.getName());
+		}
 		try {
 			return insideSerializing(obj, classOfObject);
 		} catch (IllegalAccessException e) {
