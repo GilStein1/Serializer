@@ -21,7 +21,7 @@ public class Serializer {
 	public static <T> T deserialize(String serializedValue, Class<T> classOfObject) {
 		try {
 			return insideDeserializing(serializedValue, classOfObject);
-		} catch (NoSuchFieldException | NoSuchMethodException | InvocationTargetException | InstantiationException |
+		} catch (NoSuchFieldException | InvocationTargetException | InstantiationException |
 				 IllegalAccessException e) {
 			throw new RuntimeException("Could not deserialize object of type " + classOfObject.getName());
 		}
@@ -58,9 +58,14 @@ public class Serializer {
 			.toString();
 	}
 
-	public static <T> T insideDeserializing(String serializedValue, Class<T> classOfObject) throws NoSuchFieldException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+	public static <T> T insideDeserializing(String serializedValue, Class<T> classOfObject) throws NoSuchFieldException, InvocationTargetException, InstantiationException, IllegalAccessException {
 		String valuesInside = serializedValue.substring(1, serializedValue.length() - 1);
-		T object = classOfObject.getConstructor().newInstance();
+		T object;
+		try {
+			object = classOfObject.getConstructor().newInstance();
+		} catch (NoSuchMethodException e) {
+			throw new NoEmptyConstructor(classOfObject);
+		}
 		String[] fields = splitStringByFields(valuesInside);
 		for (String field : fields) {
 			int indexOfSplit = field.indexOf(FIELD_NAME_SPLIT_CHAR);
