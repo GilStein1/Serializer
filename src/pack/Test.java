@@ -4,11 +4,13 @@ public class Test {
 
 	int a, b;
 
-	boolean is;
+	private Test2 test2;
+
+	transient boolean is;
 
 	String s;
 
-	private Test2 test2;
+	private static final int x = 5;
 
 	public Test(int a, int b, boolean is, String s, Test2 test2) {
 		this.a = a;

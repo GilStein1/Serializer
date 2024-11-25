@@ -1,5 +1,7 @@
 package pack;
 
+import javax.swing.*;
+
 public class Main {
 	public static void main(String[] args) {
 
@@ -12,10 +14,6 @@ public class Main {
 		Test test = Serializer.deserialize(serializedValue, Test.class);
 
 		System.out.println(Serializer.serialize(test, Test.class));
-		System.out.println(test.a);
-		System.out.println(test.b);
-		System.out.println(test.is);
-		System.out.println(test.s);
 
 	}
 }

@@ -2,6 +2,7 @@ package pack;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -31,25 +32,21 @@ public class Serializer {
 		StringBuilder serializedValue = new StringBuilder();
 		Field[] fields = classOfObject.getDeclaredFields();
 		for (Field field : fields) {
-			field.setAccessible(true);
-			if (field.getType().isPrimitive()) {
-				serializedValue
-					.append(FIELD_SPLIT_CHAR)
-					.append(field.getName())
-					.append(FIELD_NAME_SPLIT_CHAR)
-					.append(field.get(obj));
-			} else if (field.getType() == String.class) {
-				serializedValue
-					.append(FIELD_SPLIT_CHAR)
-					.append(field.getName())
-					.append(FIELD_NAME_SPLIT_CHAR)
-					.append(field.get(obj));
-			} else {
-				serializedValue
-					.append(FIELD_SPLIT_CHAR)
-					.append(field.getName())
-					.append(FIELD_NAME_SPLIT_CHAR)
-					.append(insideSerializing(field.get(obj), field.getType()));
+			if (!Modifier.isTransient(field.getModifiers())) {
+				field.setAccessible(true);
+				if (field.getType().isPrimitive() || field.getType() == String.class) {
+					serializedValue
+						.append(FIELD_SPLIT_CHAR)
+						.append(field.getName())
+						.append(FIELD_NAME_SPLIT_CHAR)
+						.append(field.get(obj));
+				} else {
+					serializedValue
+						.append(FIELD_SPLIT_CHAR)
+						.append(field.getName())
+						.append(FIELD_NAME_SPLIT_CHAR)
+						.append(insideSerializing(field.get(obj), field.getType()));
+				}
 			}
 		}
 		return serializedValue
@@ -73,7 +70,11 @@ public class Serializer {
 			String fieldValue = field.substring(indexOfSplit + 1);
 			Field fieldOfClass = getFieldFromName(classOfObject, fieldName);
 			Objects.requireNonNull(fieldOfClass).setAccessible(true);
-			fieldOfClass.set(object, transformStringValueToObject(fieldValue, fieldOfClass.getType()));
+			try {
+				fieldOfClass.set(object, transformStringValueToObject(fieldValue, fieldOfClass.getType()));
+			} catch (IllegalAccessException ignored) {
+
+			}
 		}
 		return object;
 	}
@@ -110,7 +111,7 @@ public class Serializer {
 				index = str.indexOf("}");
 				field = str.substring(0, index + 1);
 				fields.add(field);
-				str = str.substring(index + 1);
+				str = str.substring(index + 2);
 			}
 			if (str.isEmpty()) {
 				stop = true;
