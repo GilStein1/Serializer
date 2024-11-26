@@ -1,5 +1,8 @@
 package pack;
 
+import pack.serializer.LoggedSerializer;
+import pack.serializer.Serializer;
+
 public class Main {
 	public static void main(String[] args) {
 
@@ -9,11 +12,11 @@ public class Main {
 
 		Test2 test2 = new Test2(t, 12);
 
-		String value = Serializer.serialize(test2, Test2.class);
+		String value = Serializer.log().serialize(test2, Test2.class);
 
 		System.out.println(value);
 
-		Test2 t2 = Serializer.deserialize(value, Test2.class);
+		Test2 t2 = Serializer.log().deserialize(value, Test2.class);
 
 		System.out.println(t2.getTest().getTest() == t2.getTest());
 
