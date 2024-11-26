@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static pack.serializer.StringUtils.*;
+
 public class Serializer {
 
 	private static final char FIELD_SPLIT_CHAR = ',';
@@ -83,7 +85,12 @@ public class Serializer {
 					&& !Modifier.isStatic(field.getModifiers())
 					&& field.trySetAccessible()
 			) {
-				logValue("serializing object of type " + field.getType().getName() + " called " + field.getName());
+				logValue(
+					"serializing object of type "
+						+ field.getType().getName()
+						+ " called "
+						+ field.getName()
+				);
 				Object fieldFromObject = field.get(obj);
 				if (fieldFromObject != null) {
 					if (serializedObjects.contains(fieldFromObject)) {
@@ -131,7 +138,7 @@ public class Serializer {
 	}
 
 	public <T> T insideDeserializing(String serializedValue, Class<T> classOfObject, List<Object> serializedObjects) throws NoSuchFieldException, InvocationTargetException, InstantiationException, IllegalAccessException {
-		String valuesInside = serializedValue.substring(1, serializedValue.length() - 1);
+		String valuesInside = cutStringFrame(serializedValue);
 		T object;
 		try {
 			object = classOfObject.getConstructor().newInstance();
@@ -171,10 +178,10 @@ public class Serializer {
 		ArrayList<String> fields = new ArrayList<>();
 		while (!stop) {
 			int index = str.indexOf(FIELD_SPLIT_CHAR);
-			String field = index != -1 ? str.substring(0, index) : str;
+			String field = index != NULL_INDEX ? str.substring(0, index) : str;
 			if (!field.contains("{")) {
 				fields.add(field);
-				str = index != -1 ? str.substring(index + 1) : "";
+				str = index != NULL_INDEX ? str.substring(index + 1) : EMPTY_STRING;
 			} else {
 				index = str.indexOf("}");
 				field = str.substring(0, index + 1);
@@ -194,7 +201,7 @@ public class Serializer {
 		String className = classOfObject.getName();
 		if (classOfObject != String.class && value.startsWith(SERIALIZATION_INSTANCE_CHARACTER) && value.endsWith(SERIALIZATION_INSTANCE_CHARACTER)) {
 			logValue("looping instance of class " + className + " detected");
-			String indexPart = value.substring(1, value.length() - 1);
+			String indexPart = cutStringFrame(value);
 			int index = Integer.parseInt(indexPart);
 			return serializedObjects.get(index);
 		}
