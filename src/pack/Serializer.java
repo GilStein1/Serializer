@@ -4,45 +4,36 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class Serializer {
 
 	private static final char FIELD_SPLIT_CHAR = ',';
 	private static final char FIELD_NAME_SPLIT_CHAR = ':';
-	private final ArrayList<Object> serializedObjects;
+	private static final String SERIALIZATION_INSTANCE_CHARACTER = "~";
 
-	public Serializer() {
-		this.serializedObjects = new ArrayList<>();
-	}
-
-	public String serialize(Object obj, Class<?> classOfObject) {
+	public static String serialize(Object obj, Class<?> classOfObject) {
 		if (!obj.getClass().equals(classOfObject)) {
 			throw new IllegalArgumentException("Object is not of type " + classOfObject.getName());
 		}
-		serializedObjects.clear();
 		try {
-			return insideSerializing(obj, classOfObject);
+			return insideSerializing(obj, classOfObject, new ArrayList<>());
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException("Could not serialize object of type " + obj.getClass().getName());
-		} finally {
-			serializedObjects.clear();
 		}
 	}
 
-	public <T> T deserialize(String serializedValue, Class<T> classOfObject) {
-		serializedObjects.clear();
+	public static <T> T deserialize(String serializedValue, Class<T> classOfObject) {
 		try {
-			return insideDeserializing(serializedValue, classOfObject);
+			return insideDeserializing(serializedValue, classOfObject, new ArrayList<>());
 		} catch (NoSuchFieldException | InvocationTargetException | InstantiationException |
 				 IllegalAccessException e) {
 			throw new RuntimeException("Could not deserialize object of type " + classOfObject.getName());
-		} finally {
-			serializedObjects.clear();
 		}
 	}
 
-	private String insideSerializing(Object obj, Class<?> classOfObject) throws IllegalAccessException {
+	private static String insideSerializing(Object obj, Class<?> classOfObject, ArrayList<Object> serializedObjects) throws IllegalAccessException {
 		serializedObjects.add(obj);
 		StringBuilder serializedValue = new StringBuilder();
 		Field[] fields = classOfObject.getDeclaredFields();
@@ -59,7 +50,9 @@ public class Serializer {
 							.append(FIELD_SPLIT_CHAR)
 							.append(field.getName())
 							.append(FIELD_NAME_SPLIT_CHAR)
-							.append("~").append(serializedObjects.indexOf(fieldFromObject)).append("~");
+							.append(SERIALIZATION_INSTANCE_CHARACTER)
+							.append(serializedObjects.indexOf(fieldFromObject))
+							.append(SERIALIZATION_INSTANCE_CHARACTER);
 					} else if (field.getType().isPrimitive() || field.getType() == String.class) {
 						serializedValue
 							.append(FIELD_SPLIT_CHAR)
@@ -71,7 +64,7 @@ public class Serializer {
 							.append(FIELD_SPLIT_CHAR)
 							.append(field.getName())
 							.append(FIELD_NAME_SPLIT_CHAR)
-							.append(insideSerializing(fieldFromObject, field.getType()));
+							.append(insideSerializing(fieldFromObject, field.getType(), serializedObjects));
 					}
 					if (!serializedObjects.contains(fieldFromObject)) {
 						serializedObjects.add(fieldFromObject);
@@ -85,7 +78,7 @@ public class Serializer {
 			.toString();
 	}
 
-	public <T> T insideDeserializing(String serializedValue, Class<T> classOfObject) throws NoSuchFieldException, InvocationTargetException, InstantiationException, IllegalAccessException {
+	public static <T> T insideDeserializing(String serializedValue, Class<T> classOfObject, List<Object> serializedObjects) throws NoSuchFieldException, InvocationTargetException, InstantiationException, IllegalAccessException {
 		String valuesInside = serializedValue.substring(1, serializedValue.length() - 1);
 		T object;
 		try {
@@ -102,7 +95,7 @@ public class Serializer {
 			Field fieldOfClass = getFieldFromName(classOfObject, fieldName);
 			Objects.requireNonNull(fieldOfClass).setAccessible(true);
 			try {
-				fieldOfClass.set(object, transformStringValueToObject(fieldValue, fieldOfClass.getType()));
+				fieldOfClass.set(object, transformStringValueToObject(fieldValue, fieldOfClass.getType(), serializedObjects));
 			} catch (IllegalAccessException ignored) {
 
 			}
@@ -110,7 +103,7 @@ public class Serializer {
 		return object;
 	}
 
-	private Field getFieldFromName(Class<?> classOfObject, String fieldName) {
+	private static Field getFieldFromName(Class<?> classOfObject, String fieldName) {
 		Field currentField = null;
 		for (Field f : classOfObject.getDeclaredFields()) {
 			if (f.getName().equals(fieldName)) {
@@ -120,7 +113,7 @@ public class Serializer {
 		return currentField;
 	}
 
-	private String[] splitStringByFields(String str) {
+	private static String[] splitStringByFields(String str) {
 		boolean stop = false;
 		ArrayList<String> fields = new ArrayList<>();
 		while (!stop) {
@@ -140,9 +133,9 @@ public class Serializer {
 		return fields.toArray(new String[0]);
 	}
 
-	private Object transformStringValueToObject(String value, Class<?> classOfObject) throws NoSuchFieldException, InvocationTargetException, InstantiationException, IllegalAccessException {
+	private static Object transformStringValueToObject(String value, Class<?> classOfObject, List<Object> serializedObjects) throws NoSuchFieldException, InvocationTargetException, InstantiationException, IllegalAccessException {
 		String className = classOfObject.getName();
-		if (classOfObject != String.class && value.startsWith("~") && value.endsWith("~")) {
+		if (classOfObject != String.class && value.startsWith(SERIALIZATION_INSTANCE_CHARACTER) && value.endsWith(SERIALIZATION_INSTANCE_CHARACTER)) {
 			String indexPart = value.substring(1, value.length() - 1);
 			int index = Integer.parseInt(indexPart);
 			return serializedObjects.get(index);
@@ -156,7 +149,7 @@ public class Serializer {
 			case "float" -> Float.parseFloat(value);
 			case "double" -> Double.parseDouble(value);
 			case "java.lang.String" -> value;
-			default -> insideDeserializing(value, classOfObject);
+			default -> insideDeserializing(value, classOfObject, serializedObjects);
 		};
 	}
 
