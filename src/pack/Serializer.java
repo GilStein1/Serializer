@@ -13,6 +13,16 @@ public class Serializer {
 	private static final char FIELD_NAME_SPLIT_CHAR = ':';
 	private static final String SERIALIZATION_INSTANCE_CHARACTER = "~";
 
+	/**
+	 * The method to convert objects to Strings
+	 *
+	 * @param obj           the object to be serialized
+	 * @param classOfObject the class of the object
+	 * @return a String that describes the object
+	 * @throws RuntimeException         when the serialization fails
+	 * @throws IllegalArgumentException when the classOfObject does not
+	 *                                  match the class of the given object
+	 */
 	public static String serialize(Object obj, Class<?> classOfObject) {
 		if (!obj.getClass().equals(classOfObject)) {
 			throw new IllegalArgumentException("Object is not of type " + classOfObject.getName());
@@ -24,6 +34,18 @@ public class Serializer {
 		}
 	}
 
+	/**
+	 * The method to convert Strings back to objects
+	 *
+	 * @param serializedValue the serialized object
+	 * @param classOfObject   the class of the object
+	 * @return the deserialized object
+	 * @throws RuntimeException   when the deserialization fails
+	 * @throws NoEmptyConstructor when the class of the serialized object
+	 *                            does not have an empty constructor
+	 * @implNote the class of the serialized object must have a public empty constructor
+	 * with no arguments for the deserializer to be able to deserialize it
+	 */
 	public static <T> T deserialize(String serializedValue, Class<T> classOfObject) {
 		try {
 			return insideDeserializing(serializedValue, classOfObject, new ArrayList<>());
@@ -97,7 +119,6 @@ public class Serializer {
 			try {
 				fieldOfClass.set(object, transformStringValueToObject(fieldValue, fieldOfClass.getType(), serializedObjects));
 			} catch (IllegalAccessException ignored) {
-
 			}
 		}
 		return object;
