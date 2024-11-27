@@ -6,9 +6,14 @@ public class Test2 {
 	}
 	private Test test;
 	private int aa;
-	public Test2(Test test, int aa) {
+	private String text;
+	public Test2(Test test, int aa, String text) {
 		this.test = test;
 		this.aa = aa;
+		this.text = text;
+	}
+	public String getText() {
+		return text;
 	}
 	public Test getTest() {
 		return test;

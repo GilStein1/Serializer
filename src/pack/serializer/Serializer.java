@@ -16,6 +16,7 @@ public class Serializer {
 	private static final char FIELD_SPLIT_CHAR = ',';
 	private static final char FIELD_NAME_SPLIT_CHAR = ':';
 	private static final String SERIALIZATION_INSTANCE_CHARACTER = "~";
+	private static final char CHAR_REPLACING_STRING_FRAME = (char) 67284345;
 	private static Serializer instance;
 	protected boolean isLogged;
 
@@ -106,7 +107,15 @@ public class Serializer {
 							.append(FIELD_SPLIT_CHAR)
 							.append(field.getName())
 							.append(FIELD_NAME_SPLIT_CHAR)
-							.append(fieldFromObject);
+							.append(
+								field.getType() != String.class ?
+									fieldFromObject :
+									makeStringFrame(
+										((String) fieldFromObject)
+											.replaceAll("\"", String.valueOf(CHAR_REPLACING_STRING_FRAME)),
+										'\"'
+									)
+								);
 					} else {
 						serializedValue
 							.append(FIELD_SPLIT_CHAR)
@@ -119,6 +128,16 @@ public class Serializer {
 					}
 				} else {
 					logValue("field " + field.getName() + " is null");
+				}
+			} else {
+				if (Modifier.isTransient(field.getModifiers())) {
+					logValue("skipped field " + field.getName() + " because it is transient");
+				}
+				if(Modifier.isStatic(field.getModifiers())) {
+					logValue("skipped field " + field.getName() + " because it is static");
+				}
+				if(!field.trySetAccessible()) {
+					logValue("couldn't access field " + field.getName());
 				}
 			}
 		}
@@ -179,14 +198,17 @@ public class Serializer {
 		while (!stop) {
 			int index = str.indexOf(FIELD_SPLIT_CHAR);
 			String field = index != NULL_INDEX ? str.substring(0, index) : str;
-			if (!field.contains("{")) {
-				fields.add(field);
-				str = index != NULL_INDEX ? str.substring(index + 1) : EMPTY_STRING;
-			} else {
-				index = str.indexOf("}");
+			if(field.contains("{") || field.contains("\"")) {
+				index = field.contains("{") ? str.indexOf("}") : indexOfTheN(str, '\"', 2);
 				field = str.substring(0, index + 1);
 				fields.add(field);
+				logValue("read field " + field);
 				str = str.substring((str.length() > index + 2) ? (index + 2) : (index + 1));
+			}
+			else {
+				fields.add(field);
+				logValue("read field " + field);
+				str = index != NULL_INDEX ? str.substring(index + 1) : EMPTY_STRING;
 			}
 			stop = str.isEmpty();
 		}
@@ -213,7 +235,7 @@ public class Serializer {
 			case "long" -> Long.parseLong(value);
 			case "float" -> Float.parseFloat(value);
 			case "double" -> Double.parseDouble(value);
-			case "java.lang.String" -> value;
+			case "java.lang.String" -> cutStringFrame(value).replaceAll(String.valueOf(CHAR_REPLACING_STRING_FRAME), "\"");
 			default -> insideDeserializing(value, classOfObject, serializedObjects);
 		};
 	}
