@@ -233,6 +233,7 @@ public class Serializer {
 			case "long" -> Long.parseLong(value);
 			case "float" -> Float.parseFloat(value);
 			case "double" -> Double.parseDouble(value);
+			case "char" -> value.charAt(0);
 			case "java.lang.String" -> cutStringFrame(value).replaceAll(String.valueOf(CHAR_REPLACING_STRING_FRAME), "\"");
 			default -> insideDeserializing(value, classOfObject, serializedObjects);
 		};
