@@ -1,4 +1,4 @@
-package pack.serializer;
+package serializer;
 
 public class StringUtils {
 

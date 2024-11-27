@@ -1,4 +1,4 @@
-package pack;
+package serializer;
 
 public class NoEmptyConstructor extends RuntimeException {
 	public NoEmptyConstructor(Class<?> classWithNoEmptyConstructor) {

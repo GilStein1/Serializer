@@ -1,6 +1,4 @@
-package pack.serializer;
-
-import pack.NoEmptyConstructor;
+package serializer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -9,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static pack.serializer.StringUtils.*;
+import static serializer.StringUtils.*;
 
 public class Serializer {
 
