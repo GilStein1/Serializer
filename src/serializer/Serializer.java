@@ -17,6 +17,7 @@ public class Serializer {
 	private static final char CHAR_REPLACING_STRING_FRAME = (char) 67284345;
 	private static final char CHAR_REPLACING_ASTERISK = (char) 67284346;
 	private static final char CHAR_REPLACING_PLUS_SIGN = (char) 67284347;
+	private static final char CHAR_REPLACING_SPACE = (char) 67284348;
 	private static Serializer instance;
 	protected boolean isLogged;
 
@@ -114,7 +115,8 @@ public class Serializer {
 										((String) fieldFromObject)
 											.replaceAll("\"", String.valueOf(CHAR_REPLACING_STRING_FRAME))
 											.replaceAll("\\*", String.valueOf(CHAR_REPLACING_ASTERISK))
-											.replaceAll("\\+", String.valueOf(CHAR_REPLACING_PLUS_SIGN)),
+											.replaceAll("\\+", String.valueOf(CHAR_REPLACING_PLUS_SIGN))
+											.replaceAll(" ", String.valueOf(CHAR_REPLACING_SPACE)),
 										'\"'
 									)
 								);
@@ -241,7 +243,8 @@ public class Serializer {
 			case "java.lang.String" -> cutStringFrame(value)
 				.replaceAll(String.valueOf(CHAR_REPLACING_STRING_FRAME), "\"")
 				.replaceAll(String.valueOf(CHAR_REPLACING_ASTERISK), "*")
-				.replaceAll(String.valueOf(CHAR_REPLACING_PLUS_SIGN), "+");
+				.replaceAll(String.valueOf(CHAR_REPLACING_PLUS_SIGN), "+")
+				.replaceAll(String.valueOf(CHAR_REPLACING_SPACE), " ");
 			default -> insideDeserializing(value, classOfObject, serializedObjects);
 		};
 	}
